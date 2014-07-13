@@ -283,6 +283,9 @@ typedef NS_ENUM(NSInteger, DDYouTubeUploaderConnectionType)
     
     if (!self.authorizationToken)
     {
+        // Delete the credentials, as they are wrong
+        [self deleteSavedUserCredentials];
+        
         *error = [self createErrorWithCode:DDYouTubeUploaderErrorCodeWrongCredentials
                                description:@"Email or Password is Wrong."];
     }
