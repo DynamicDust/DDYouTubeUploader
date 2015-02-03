@@ -130,11 +130,11 @@
                                   kDDYouTubeVideoMetadataDescriptionKey:@"description",
                                   kDDYouTubeVideoMetadataKeywordsKey:@"key,word",
                                   kDDYouTubeVideoMetadataCategoryKey:@"Entertainment"}
-                 withCompletion:^(BOOL success, NSError *error)
+                 withCompletion:^(BOOL success, NSURL *videoURL, NSError *error)
      {
          if (success && !error)
          {
-             [weakSelf.progressLabel setText:@"Upload success."];
+             [weakSelf.progressLabel setText:[NSString stringWithFormat:@"Upload successful. Video is located at %@.", videoURL]];
          }
      }];
 }

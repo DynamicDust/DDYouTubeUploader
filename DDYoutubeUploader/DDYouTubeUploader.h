@@ -41,8 +41,9 @@ extern NSString *const kDDYouTubeVideoMetadataDescriptionKey;
 extern NSString *const kDDYouTubeVideoMetadataKeywordsKey;
 extern NSString *const kDDYouTubeVideoMetadataCategoryKey;
 
-// A completion block typedef
-typedef void (^completionBlock)(BOOL success, NSError *error);
+// Completion blocks typedefs
+typedef void (^loginCompletionBlock)(BOOL success, NSError *error);
+typedef void (^uploadCompletionBlock)(BOOL success, NSURL *videoURL, NSError *error);
 
 //----------------------------------------------------------------------
 #pragma mark - Interface -
@@ -58,7 +59,7 @@ typedef void (^completionBlock)(BOOL success, NSError *error);
  *  This property has to be set before starting any upload.
  *  Find it at http://code.google.com/apis/youtube/dashboard/gwt/index.html
  */
-@property (nonatomic, strong) NSString *developerKey;
+@property (nonatomic, copy) NSString *developerKey;
 
 /**
  *  This enables saving of user credentials in the keychain,
@@ -103,7 +104,7 @@ typedef void (^completionBlock)(BOOL success, NSError *error);
  */
 - (void)loginWithEmail:(NSString *)userEmail
            andPassword:(NSString *)userPassword
-        withCompletion:(completionBlock)completionBlock;
+        withCompletion:(loginCompletionBlock)completionBlock;
 
 /**
  *  This is the main method of this class which triggers the upload.
@@ -113,7 +114,7 @@ typedef void (^completionBlock)(BOOL success, NSError *error);
  */
 - (void)uploadVideoAtPath:(NSString *)videoPath
              withMetadata:(NSDictionary *)videoMetadata
-           withCompletion:(completionBlock)completionBlock;
+           withCompletion:(uploadCompletionBlock)completionBlock;
 
 /**
  *  This method cancels all currently active operations,

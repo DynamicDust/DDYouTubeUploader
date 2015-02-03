@@ -87,7 +87,9 @@ typedef NS_ENUM(NSInteger, DDYouTubeUploaderConnectionType)
 
 // State and completion block
 @property (nonatomic, assign, readwrite) DDYouTubeUploaderState state;
-@property (nonatomic, copy, readwrite) completionBlock completionBlock;
+
+@property (nonatomic, copy, readwrite) loginCompletionBlock loginCompletionBlock;
+@property (nonatomic, copy, readwrite) uploadCompletionBlock uploadCompletionBlock;
 
 //----------------------------------------------------------------------
 @end
@@ -131,11 +133,11 @@ typedef NS_ENUM(NSInteger, DDYouTubeUploaderConnectionType)
 
 - (void)loginWithEmail:(NSString *)userEmail
            andPassword:(NSString *)userPassword
-        withCompletion:(completionBlock)completionBlock
+        withCompletion:(loginCompletionBlock)completionBlock
 {
     NSAssert(self.developerKey, @"DDYoutubeUploader: Developer key must be set first.");
     
-    self.completionBlock = completionBlock;
+    self.loginCompletionBlock = completionBlock;
     
     NSString *savedEmail     = [self getUserCredentialForKey:kDDYouTubeAuthorizationEmailKey];
     NSString *savedPassword  = [self getUserCredentialForKey:kDDYouTubeAuthorizationPasswordKey];
@@ -160,7 +162,7 @@ typedef NS_ENUM(NSInteger, DDYouTubeUploaderConnectionType)
 
 - (void)uploadVideoAtPath:(NSString *)videoPath
              withMetadata:(NSDictionary *)videoMetadata
-           withCompletion:(completionBlock)completionBlock
+           withCompletion:(uploadCompletionBlock)completionBlock
 {
     NSAssert(self.developerKey, @"DDYoutubeUploader: Developer key must be set first.");
     
@@ -171,10 +173,10 @@ typedef NS_ENUM(NSInteger, DDYouTubeUploaderConnectionType)
     }
     
     
-    self.localVideoURL   = [NSURL fileURLWithPath:videoPath];
-    self.completionBlock = completionBlock;
-    self.state           = DDYouTubeUploaderStatePreparingFile;
-    NSError *error       = nil;
+    self.localVideoURL          = [NSURL fileURLWithPath:videoPath];
+    self.uploadCompletionBlock  = completionBlock;
+    self.state                  = DDYouTubeUploaderStatePreparingFile;
+    NSError *error              = nil;
 
     // Send file info
     [self sendVideoFileMetadata:videoMetadata error:&error];
@@ -195,8 +197,8 @@ typedef NS_ENUM(NSInteger, DDYouTubeUploaderConnectionType)
 {
     [self logDebug:@"Cancelling all active operations..."];
 
-    self.completionBlock = nil;
-    self.progressBlock   = nil;
+    self.uploadCompletionBlock = nil;
+    self.progressBlock         = nil;
 
     // Cancel the current upload operation
     switch (self.state)
@@ -299,8 +301,10 @@ typedef NS_ENUM(NSInteger, DDYouTubeUploaderConnectionType)
 {
     self.state = DDYouTubeUploaderStateNotUploading;
     
-    if (self.completionBlock)
-        self.completionBlock(NO, error);
+    if (self.loginCompletionBlock)
+        self.loginCompletionBlock(NO, error);
+    else if (self.uploadCompletionBlock)
+        self.uploadCompletionBlock(NO, nil, error);
 }
 
 //----------------------------------------------------------------------
@@ -458,8 +462,8 @@ typedef NS_ENUM(NSInteger, DDYouTubeUploaderConnectionType)
 {
     self.state = DDYouTubeUploaderStateNotUploading;
 
-    if (self.completionBlock)
-        self.completionBlock(YES, nil);
+    if (self.uploadCompletionBlock)
+        self.uploadCompletionBlock(YES, self.remoteVideoURL, nil);
 }
 
 //----------------------------------------------------------------------
@@ -499,8 +503,8 @@ typedef NS_ENUM(NSInteger, DDYouTubeUploaderConnectionType)
                 
                 self.isLoggedIn = YES;
                 
-                if (self.completionBlock)
-                    self.completionBlock(YES, nil);
+                if (self.loginCompletionBlock)
+                    self.loginCompletionBlock(YES, nil);
             }
             else
             {
@@ -747,7 +751,7 @@ typedef NS_ENUM(NSInteger, DDYouTubeUploaderConnectionType)
     
     if (status != errSecSuccess)
     {
-        [self logWarning:@"Failed to get saved credentials. Maybe no were yet saved."];
+        [self logWarning:@"Failed to get saved credentials. Maybe no credentials were yet saved."];
         return nil;
     }
     
